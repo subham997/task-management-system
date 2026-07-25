@@ -2,32 +2,33 @@
 
 namespace App\Models;
 
-use Database\Factories\TaskFactory;
+use Database\Factories\AssignmentRuleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Task extends Model
+class AssignmentRule extends Model
 {
-    /** @use HasFactory<TaskFactory> */
+    /** @use HasFactory<AssignmentRuleFactory> */
     use HasFactory;
 
     protected $fillable = [
         'created_by',
-        'title',
+        'name',
         'description',
-        'status',
+        'conditions',
+        'actions',
         'priority',
-        'due_at',
-        'completed_at',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'due_at' => 'datetime',
-            'completed_at' => 'datetime',
+            'conditions' => 'array',
+            'actions' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -36,7 +37,7 @@ class Task extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function assignments(): HasMany
+    public function taskAssignments(): HasMany
     {
         return $this->hasMany(TaskAssignment::class);
     }

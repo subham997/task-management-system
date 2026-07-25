@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('assignment_logs', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('task_assignment_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('event', 64);
+            $table->text('description')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
+
+            $table->index(['task_assignment_id', 'created_at']);
+            $table->index(['actor_id', 'created_at']);
+            $table->index('event');
         });
     }
 
