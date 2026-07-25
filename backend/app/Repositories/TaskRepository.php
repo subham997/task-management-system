@@ -45,6 +45,11 @@ class TaskRepository
         $task->delete();
     }
 
+    public function findWithCreator(int $taskId): Task
+    {
+        return Task::query()->with('creator')->findOrFail($taskId);
+    }
+
     /** @param array<string, mixed> $filters */
     private function applyFilters(Builder $query, array $filters): void
     {

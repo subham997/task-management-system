@@ -10,7 +10,10 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class TaskService
 {
-    public function __construct(private readonly TaskRepository $tasks) {}
+    public function __construct(
+        private readonly TaskRepository $tasks,
+        private readonly TaskCacheService $cache
+    ) {}
 
     /** @param array<string, mixed> $filters */
     public function list(User $user, array $filters): LengthAwarePaginator
@@ -26,6 +29,14 @@ class TaskService
         AssignTaskJob::dispatch($task->id)->afterCommit();
 
         return $task;
+    }
+
+    public function details(int $taskId): Task
+    {
+        return $this->cache->task(
+            $taskId,
+            fn (): Task => $this->tasks->findWithCreator($taskId)
+        );
     }
 
     /** @param array<string, mixed> $attributes */

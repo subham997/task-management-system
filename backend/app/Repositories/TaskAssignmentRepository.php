@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Task;
 use App\Models\TaskAssignment;
+use App\Services\AssignmentCacheService;
 
 class TaskAssignmentRepository
 {
@@ -26,5 +27,16 @@ class TaskAssignmentRepository
     public function create(array $attributes): TaskAssignment
     {
         return TaskAssignment::query()->create($attributes);
+    }
+
+    public function activeTaskCountForUser(int $userId): int
+    {
+        return app(AssignmentCacheService::class)->activeTaskCount(
+            $userId,
+            fn (): int => TaskAssignment::query()
+                ->where('assigned_to', $userId)
+                ->whereIn('status', ['assigned', 'accepted'])
+                ->count()
+        );
     }
 }

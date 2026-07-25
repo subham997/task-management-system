@@ -46,7 +46,7 @@ class TaskController extends Controller
     {
         Gate::authorize('view', $task);
 
-        return $this->successResponse(['task' => new TaskResource($task->load('creator'))]);
+        return $this->successResponse(['task' => new TaskResource($this->taskService->details($task->id))]);
     }
 
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
