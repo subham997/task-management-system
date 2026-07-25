@@ -1,0 +1,27 @@
+<div class="row justify-content-center">
+  <div class="col-lg-5 col-md-7">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">Sign in</h2>
+        <p class="text-muted">Use your Laravel credentials to access the task workspace.</p>
+        <form ng-submit="submit()">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" ng-model="credentials.email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" ng-model="credentials.password" required>
+          </div>
+          <div class="d-grid">
+            <button class="btn btn-primary" type="submit" ng-disabled="loading">
+              <span class="spinner-border spinner-border-sm me-2" role="status" ng-if="loading"></span>
+              {{ loading ? 'Signing in…' : 'Login' }}
+            </button>
+          </div>
+          <div class="alert alert-danger mt-3" ng-if="error">{{ error }}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

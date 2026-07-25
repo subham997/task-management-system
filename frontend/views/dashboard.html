@@ -1,0 +1,59 @@
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="h4 mb-1">Dashboard</h2>
+            <p class="text-muted mb-0">Overview of your task workspace and queue health.</p>
+          </div>
+          <span class="badge bg-success-subtle text-success">{{ queueStatus.status }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4" ng-repeat="card in [{title:'Tasks', value:stats.total || 0, text:'Available in the current list'},{title:'Queue', value:queueStatus.status, text:queueStatus.detail || 'Queue service state'}]">
+    <div class="card shadow-sm border-0 h-100 card-hover">
+      <div class="card-body">
+        <h3 class="h6 text-muted">{{ card.title }}</h3>
+        <div class="display-6 fw-semibold">{{ card.value }}</div>
+        <p class="text-muted mb-0">{{ card.text }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h5 mb-0">Recent tasks</h3>
+          <a class="btn btn-outline-primary btn-sm" href="#/tasks">View all</a>
+        </div>
+        <div class="text-center py-4" ng-if="loading">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+        <div class="table-responsive" ng-if="!loading">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="task in tasks">
+                <td><a ng-href="#/tasks/{{ task.id }}">{{ task.title }}</a></td>
+                <td><span class="badge badge-soft">{{ task.status }}</span></td>
+                <td>{{ task.priority }}</td>
+                <td>{{ task.due_at | date:'mediumDate' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

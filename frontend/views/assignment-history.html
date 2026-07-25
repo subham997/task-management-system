@@ -1,0 +1,28 @@
+<div class="card shadow-sm border-0">
+  <div class="card-body">
+    <h2 class="h4 mb-3">Assignment history</h2>
+    <div class="text-center py-4" ng-if="loading">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+    <div class="table-responsive" ng-if="!loading">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="task in history">
+            <td><a ng-href="#/tasks/{{ task.id }}">{{ task.title }}</a></td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.priority }}</td>
+            <td>{{ task.updated_at | date:'mediumDate' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

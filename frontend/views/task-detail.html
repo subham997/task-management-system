@@ -1,0 +1,58 @@
+<div class="card shadow-sm border-0">
+  <div class="card-body">
+    <div class="text-center py-4" ng-if="loading">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div ng-if="!loading && task">
+      <div class="d-flex justify-content-between flex-wrap gap-3 mb-3">
+        <div>
+          <h2 class="h4 mb-1">{{ task.title }}</h2>
+          <p class="text-muted mb-0">Created by {{ task.creator.name }}</p>
+        </div>
+        <div class="d-flex gap-2">
+          <span class="badge bg-secondary">{{ task.status }}</span>
+          <span class="badge bg-warning text-dark">{{ task.priority }}</span>
+        </div>
+      </div>
+
+      <p class="mb-4">{{ task.description }}</p>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="border rounded p-3">
+            <div class="small text-muted">Due date</div>
+            <div>{{ task.due_at | date:'mediumDate' }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="border rounded p-3">
+            <div class="small text-muted">Completion</div>
+            <div>{{ task.completed_at ? (task.completed_at | date:'mediumDate') : 'Pending' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="h5">Assignment logs</h3>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="log in assignmentLogs">
+              <td>{{ log.created_at | date:'medium' }}</td>
+              <td>{{ log.description || 'No details available.' }}</td>
+            </tr>
+            <tr ng-if="!assignmentLogs.length">
+              <td colspan="2" class="text-muted">No assignment logs were returned for this task.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
