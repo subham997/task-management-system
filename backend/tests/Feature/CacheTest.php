@@ -15,6 +15,7 @@ use App\Services\TaskService;
 use App\Services\UserEligibilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CacheTest extends TestCase
@@ -29,38 +30,39 @@ class CacheTest extends TestCase
         Role::query()->create(['name' => 'Employee']);
     }
 
-    public function test_task_details_are_cached_and_invalidated_when_a_task_changes(): void
+    public function test_task_cache_miss_hit_and_refresh(): void
     {
-        $task = Task::factory()->create();
+        $task = Task::factory()->create(['title' => 'Initial title']);
         $cache = app(TaskCacheService::class);
 
-        $details = app(TaskService::class)->details($task->id);
-
-        $this->assertSame($task->id, $details->id);
+        $this->assertFalse(Cache::has($cache->taskKey($task->id)));
+        $this->assertSame('Initial title', app(TaskService::class)->details($task->id)->title);
         $this->assertTrue(Cache::has($cache->taskKey($task->id)));
 
-        $task->update(['title' => 'Updated cached task']);
+        DB::table('tasks')->where('id', $task->id)->update(['title' => 'Database-only change']);
+        $this->assertSame('Initial title', app(TaskService::class)->details($task->id)->title);
 
+        $task->refresh()->update(['title' => 'Refreshed title']);
         $this->assertFalse(Cache::has($cache->taskKey($task->id)));
-        $this->assertSame('Updated cached task', app(TaskService::class)->details($task->id)->title);
+        $this->assertSame('Refreshed title', app(TaskService::class)->details($task->id)->title);
     }
 
-    public function test_assignment_rules_are_cached_and_invalidated_when_a_rule_changes(): void
+    public function test_assignment_rules_are_cached_with_the_required_key_and_refreshed_after_update(): void
     {
         $rule = AssignmentRule::factory()->create();
         $cache = app(AssignmentCacheService::class);
         $repository = app(AssignmentRuleRepository::class);
 
         $this->assertCount(1, $repository->active());
-        $this->assertTrue(Cache::has($cache->activeRulesKey()));
+        $this->assertTrue(Cache::has($cache->assignmentRuleKey($rule->id)));
 
         $rule->update(['is_active' => false]);
 
-        $this->assertFalse(Cache::has($cache->activeRulesKey()));
+        $this->assertFalse(Cache::has($cache->assignmentRuleKey($rule->id)));
         $this->assertCount(0, $repository->active());
     }
 
-    public function test_assignment_changes_invalidate_active_task_count_cache(): void
+    public function test_assignment_changes_refresh_active_task_count_cache(): void
     {
         $user = $this->employee();
         $cache = app(AssignmentCacheService::class);
@@ -75,24 +77,25 @@ class CacheTest extends TestCase
         $this->assertSame(1, $repository->activeTaskCountForUser($user->id));
     }
 
-    public function test_user_profile_changes_invalidate_eligible_users_cache(): void
+    public function test_user_profile_and_eligible_users_caches_refresh_after_a_profile_update(): void
     {
         $user = $this->employee(['department' => 'Engineering']);
+        $task = Task::factory()->create();
         $rule = AssignmentRule::factory()->create([
             'conditions' => ['departments' => ['Engineering']],
         ]);
-        $cache = app(AssignmentCacheService::class);
+        $assignmentCache = app(AssignmentCacheService::class);
+        $taskCache = app(TaskCacheService::class);
         $eligibility = app(UserEligibilityService::class);
 
-        $this->assertCount(1, $eligibility->eligibleFor($rule));
-        $oldKey = $cache->eligibleUsersKey($rule->id);
-        $this->assertTrue(Cache::has($oldKey));
+        $this->assertCount(1, $eligibility->eligibleFor($rule, $task));
+        $this->assertTrue(Cache::has($assignmentCache->userProfileKey($user->id)));
+        $this->assertTrue(Cache::has($taskCache->eligibleUsersKey($task->id)));
 
         $user->update(['department' => 'Operations']);
 
-        $newKey = $cache->eligibleUsersKey($rule->id);
-        $this->assertNotSame($oldKey, $newKey);
-        $this->assertCount(0, $eligibility->eligibleFor($rule));
+        $this->assertFalse(Cache::has($assignmentCache->userProfileKey($user->id)));
+        $this->assertCount(0, $eligibility->eligibleFor($rule, $task));
     }
 
     /** @param array<string, mixed> $attributes */

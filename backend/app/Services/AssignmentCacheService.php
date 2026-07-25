@@ -6,7 +6,6 @@ use App\Models\AssignmentRule;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class AssignmentCacheService
 {
@@ -17,19 +16,27 @@ class AssignmentCacheService
     {
         return Cache::remember(
             $this->activeRulesKey(),
-            config('task-cache.ttl.assignment_rules'),
+            config('cache.ttl.assignment_rules'),
             $resolver
         );
     }
 
-    /** @param callable(): Collection<int, User> $resolver
-     * @return Collection<int, User>
-     */
-    public function eligibleUsers(AssignmentRule $rule, callable $resolver): Collection
+    /** @param callable(): AssignmentRule $resolver */
+    public function assignmentRule(int $ruleId, callable $resolver): AssignmentRule
     {
         return Cache::remember(
-            $this->eligibleUsersKey($rule->id),
-            config('task-cache.ttl.eligible_users'),
+            $this->assignmentRuleKey($ruleId),
+            config('cache.ttl.assignment_rules'),
+            $resolver
+        );
+    }
+
+    /** @param callable(): User $resolver */
+    public function userProfile(int $userId, callable $resolver): User
+    {
+        return Cache::remember(
+            $this->userProfileKey($userId),
+            config('cache.ttl.user_profile'),
             $resolver
         );
     }
@@ -39,7 +46,7 @@ class AssignmentCacheService
     {
         return Cache::remember(
             $this->activeTaskCountKey($userId),
-            config('task-cache.ttl.active_task_count'),
+            config('cache.ttl.active_task_count'),
             $resolver
         );
     }
@@ -54,9 +61,14 @@ class AssignmentCacheService
         Cache::forget($this->activeTaskCountKey($userId));
     }
 
-    public function invalidateEligibleUsers(): void
+    public function forgetAssignmentRule(int $ruleId): void
     {
-        Cache::forever($this->eligibilityVersionKey(), (string) Str::uuid());
+        Cache::forget($this->assignmentRuleKey($ruleId));
+    }
+
+    public function forgetUserProfile(int $userId): void
+    {
+        Cache::forget($this->userProfileKey($userId));
     }
 
     public function activeRulesKey(): string
@@ -66,21 +78,16 @@ class AssignmentCacheService
 
     public function activeTaskCountKey(int $userId): string
     {
-        return "assignment:active-task-count:{$userId}";
+        return "user:{$userId}:active-task-count";
     }
 
-    public function eligibleUsersKey(int $ruleId): string
+    public function assignmentRuleKey(int $ruleId): string
     {
-        return "assignment:eligible-users:{$ruleId}:{$this->eligibilityVersion()}";
+        return "assignment-rule:{$ruleId}";
     }
 
-    private function eligibilityVersion(): string
+    public function userProfileKey(int $userId): string
     {
-        return Cache::rememberForever($this->eligibilityVersionKey(), fn (): string => (string) Str::uuid());
-    }
-
-    private function eligibilityVersionKey(): string
-    {
-        return 'assignment:eligible-users:version';
+        return "user:{$userId}";
     }
 }

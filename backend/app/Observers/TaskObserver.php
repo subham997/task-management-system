@@ -9,11 +9,15 @@ class TaskObserver
 {
     public function saved(Task $task): void
     {
-        app(TaskCacheService::class)->forgetTask($task->id);
+        $cache = app(TaskCacheService::class);
+        $cache->forgetTask($task->id);
+        $cache->forgetEligibleUsers($task->id);
     }
 
     public function deleted(Task $task): void
     {
-        app(TaskCacheService::class)->forgetTask($task->id);
+        $cache = app(TaskCacheService::class);
+        $cache->forgetTask($task->id);
+        $cache->forgetEligibleUsers($task->id);
     }
 }

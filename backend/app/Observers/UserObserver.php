@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\User;
 use App\Services\AssignmentCacheService;
+use App\Services\TaskCacheService;
 
 class UserObserver
 {
@@ -20,7 +21,8 @@ class UserObserver
     private function invalidate(User $user): void
     {
         $cache = app(AssignmentCacheService::class);
+        $cache->forgetUserProfile($user->id);
         $cache->forgetActiveTaskCount($user->id);
-        $cache->invalidateEligibleUsers();
+        app(TaskCacheService::class)->invalidateAllEligibleUsers();
     }
 }

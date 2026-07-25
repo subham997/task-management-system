@@ -27,7 +27,7 @@ class AssignmentEngine
             }
 
             foreach ($this->rules->active() as $rule) {
-                $assignee = $this->selector->select($this->eligibility->eligibleFor($rule));
+                $assignee = $this->selector->select($this->eligibility->eligibleFor($rule, $task));
 
                 if ($assignee === null) {
                     continue;

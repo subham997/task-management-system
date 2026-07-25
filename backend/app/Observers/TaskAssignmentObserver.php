@@ -32,7 +32,9 @@ class TaskAssignmentObserver
             $assignmentCache->forgetActiveTaskCount($previousAssigneeId);
         }
 
-        $assignmentCache->invalidateEligibleUsers();
-        app(TaskCacheService::class)->forgetTask($assignment->task_id);
+        $taskCache = app(TaskCacheService::class);
+        $taskCache->forgetTask($assignment->task_id);
+        $taskCache->forgetEligibleUsers($assignment->task_id);
+        $taskCache->invalidateAllEligibleUsers();
     }
 }
