@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthService
 {
@@ -31,8 +32,15 @@ class AuthService
         $user = $this->users->findByEmail($credentials['email']);
 
         if ($user === null || ! $user->status || ! Hash::check($credentials['password'], $user->password)) {
+            Log::warning('auth.login_failed', ['email' => $credentials['email']]);
+
             return null;
         }
+
+        Log::info('auth.login_succeeded', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
 
         return $user;
     }
@@ -49,5 +57,7 @@ class AuthService
     public function revokeCurrentToken(User $user): void
     {
         $user->currentAccessToken()?->delete();
+
+        Log::info('auth.logout_succeeded', ['user_id' => $user->id]);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\AssignmentRule;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentCacheService
 {
@@ -17,7 +18,11 @@ class AssignmentCacheService
         return Cache::remember(
             $this->activeRulesKey(),
             config('cache.ttl.assignment_rules'),
-            $resolver
+            function () use ($resolver): Collection {
+                Log::debug('cache.miss', ['cache_key' => $this->activeRulesKey()]);
+
+                return $resolver();
+            }
         );
     }
 
@@ -27,7 +32,11 @@ class AssignmentCacheService
         return Cache::remember(
             $this->assignmentRuleKey($ruleId),
             config('cache.ttl.assignment_rules'),
-            $resolver
+            function () use ($ruleId, $resolver): AssignmentRule {
+                Log::debug('cache.miss', ['cache_key' => $this->assignmentRuleKey($ruleId)]);
+
+                return $resolver();
+            }
         );
     }
 
@@ -37,7 +46,11 @@ class AssignmentCacheService
         return Cache::remember(
             $this->userProfileKey($userId),
             config('cache.ttl.user_profile'),
-            $resolver
+            function () use ($userId, $resolver): User {
+                Log::debug('cache.miss', ['cache_key' => $this->userProfileKey($userId)]);
+
+                return $resolver();
+            }
         );
     }
 
@@ -47,7 +60,11 @@ class AssignmentCacheService
         return Cache::remember(
             $this->activeTaskCountKey($userId),
             config('cache.ttl.active_task_count'),
-            $resolver
+            function () use ($userId, $resolver): int {
+                Log::debug('cache.miss', ['cache_key' => $this->activeTaskCountKey($userId)]);
+
+                return $resolver();
+            }
         );
     }
 

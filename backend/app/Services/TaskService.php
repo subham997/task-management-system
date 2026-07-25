@@ -7,6 +7,8 @@ use App\Models\Task;
 use App\Models\User;
 use App\Repositories\TaskRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TaskService
 {
@@ -24,11 +26,17 @@ class TaskService
     /** @param array<string, mixed> $attributes */
     public function create(User $user, array $attributes): Task
     {
-        $task = $this->tasks->create($user, $this->withCompletionTimestamp($attributes));
+        return DB::transaction(function () use ($user, $attributes): Task {
+            $task = $this->tasks->create($user, $this->withCompletionTimestamp($attributes));
 
-        AssignTaskJob::dispatch($task->id)->afterCommit();
+            AssignTaskJob::dispatch($task->id)->afterCommit();
+            Log::info('task.created', [
+                'task_id' => $task->id,
+                'user_id' => $user->id,
+            ]);
 
-        return $task;
+            return $task;
+        });
     }
 
     public function details(int $taskId): Task
@@ -40,14 +48,29 @@ class TaskService
     }
 
     /** @param array<string, mixed> $attributes */
-    public function update(Task $task, array $attributes): Task
+    public function update(User $user, Task $task, array $attributes): Task
     {
-        return $this->tasks->update($task, $this->withCompletionTimestamp($attributes, $task));
+        return DB::transaction(function () use ($user, $task, $attributes): Task {
+            $task = $this->tasks->update($task, $this->withCompletionTimestamp($attributes, $task));
+            Log::info('task.updated', [
+                'task_id' => $task->id,
+                'user_id' => $user->id,
+            ]);
+
+            return $task;
+        });
     }
 
-    public function delete(Task $task): void
+    public function delete(User $user, Task $task): void
     {
-        $this->tasks->delete($task);
+        DB::transaction(function () use ($user, $task): void {
+            $taskId = $task->id;
+            $this->tasks->delete($task);
+            Log::info('task.deleted', [
+                'task_id' => $taskId,
+                'user_id' => $user->id,
+            ]);
+        });
     }
 
     /** @param array<string, mixed> $attributes

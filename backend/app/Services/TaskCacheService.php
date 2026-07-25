@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TaskCacheService
@@ -17,7 +18,11 @@ class TaskCacheService
         return Cache::remember(
             $this->taskKey($taskId),
             config('cache.ttl.task_details'),
-            $resolver
+            function () use ($taskId, $resolver): Task {
+                Log::debug('cache.miss', ['cache_key' => $this->taskKey($taskId)]);
+
+                return $resolver();
+            }
         );
     }
 
@@ -40,6 +45,7 @@ class TaskCacheService
         }
 
         $cached['version'] = $version;
+        Log::debug('cache.miss', ['cache_key' => $key, 'assignment_rule_id' => $rule->id]);
         $cached['rules'][$rule->id] = $resolver();
 
         Cache::put($key, $cached, config('cache.ttl.eligible_users'));

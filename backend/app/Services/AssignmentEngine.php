@@ -6,6 +6,7 @@ use App\Models\TaskAssignment;
 use App\Repositories\AssignmentRuleRepository;
 use App\Repositories\TaskAssignmentRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentEngine
 {
@@ -19,6 +20,8 @@ class AssignmentEngine
 
     public function assignTask(int $taskId): ?TaskAssignment
     {
+        Log::info('assignment.started', ['task_id' => $taskId]);
+
         return DB::transaction(function () use ($taskId): ?TaskAssignment {
             $task = $this->assignments->findTaskForUpdate($taskId);
 
@@ -42,6 +45,12 @@ class AssignmentEngine
                 ]);
 
                 $this->logger->logAssignment($assignment);
+                Log::info('assignment.completed', [
+                    'assignment_id' => $assignment->id,
+                    'task_id' => $task->id,
+                    'assigned_to' => $assignee->id,
+                    'assignment_rule_id' => $rule->id,
+                ]);
 
                 return $assignment;
             }

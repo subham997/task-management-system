@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Support\ApiResponse as ApiResponseFactory;
 use Illuminate\Http\JsonResponse;
 
 trait ApiResponse
@@ -12,20 +13,12 @@ trait ApiResponse
         string $message = 'Request successful',
         int $status = 200
     ): JsonResponse {
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $status);
+        return ApiResponseFactory::success($data, $message, $status);
     }
 
     /** @param array<string, mixed>|null $errors */
     protected function errorResponse(string $message, int $status, ?array $errors = null): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'message' => $message,
-            'errors' => $errors,
-        ], $status);
+        return ApiResponseFactory::error($message, $status, $errors);
     }
 }

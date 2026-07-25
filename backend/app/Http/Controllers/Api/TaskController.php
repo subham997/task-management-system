@@ -11,6 +11,7 @@ use App\Models\Task;
 use App\Services\TaskService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
@@ -54,15 +55,15 @@ class TaskController extends Controller
         Gate::authorize('update', $task);
 
         return $this->successResponse(
-            ['task' => new TaskResource($this->taskService->update($task, $request->validated()))],
+            ['task' => new TaskResource($this->taskService->update($request->user(), $task, $request->validated()))],
             'Task updated successfully.'
         );
     }
 
-    public function destroy(Task $task): JsonResponse
+    public function destroy(Request $request, Task $task): JsonResponse
     {
         Gate::authorize('delete', $task);
-        $this->taskService->delete($task);
+        $this->taskService->delete($request->user(), $task);
 
         return $this->successResponse(message: 'Task deleted successfully.');
     }
