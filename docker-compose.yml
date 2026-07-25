@@ -9,19 +9,34 @@ services:
 
     container_name: laravel_app
 
-    volumes:
-      - ./backend:/var/www/html
+    restart: unless-stopped
 
     working_dir: /var/www/html
 
+    volumes:
+      - ./backend:/var/www/html
+
+    environment:
+      APP_ENV: local
+      PHP_IDE_CONFIG: serverName=laravel
+
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+
+      redis:
+        condition: service_started
+
+    networks:
+      - laravel
 
   nginx:
-    image: nginx:latest
+
+    image: nginx:1.27-alpine
 
     container_name: nginx
+
+    restart: unless-stopped
 
     ports:
       - "8000:80"
@@ -33,30 +48,65 @@ services:
     depends_on:
       - app
 
+    networks:
+      - laravel
+
   mysql:
-    image: mysql:8
+
+    image: mysql:8.4
 
     container_name: mysql
 
-    restart: always
-
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: task_management
+    restart: unless-stopped
 
     ports:
       - "3306:3306"
 
+    environment:
+
+      MYSQL_ROOT_PASSWORD: root
+
+      MYSQL_DATABASE: task_management
+
+      MYSQL_USER: laravel
+
+      MYSQL_PASSWORD: laravel
+
     volumes:
+
       - mysql_data:/var/lib/mysql
 
+    healthcheck:
+
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 10
+
+    networks:
+      - laravel
+
   redis:
-    image: redis:7
+
+    image: redis:7-alpine
 
     container_name: redis
+
+    restart: unless-stopped
 
     ports:
       - "6379:6379"
 
+    networks:
+      - laravel
+
 volumes:
+
   mysql_data:
+
+networks:
+
+  laravel:
