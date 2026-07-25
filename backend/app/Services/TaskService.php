@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\AssignTaskJob;
 use App\Models\Task;
 use App\Models\User;
 use App\Repositories\TaskRepository;
@@ -20,7 +21,11 @@ class TaskService
     /** @param array<string, mixed> $attributes */
     public function create(User $user, array $attributes): Task
     {
-        return $this->tasks->create($user, $this->withCompletionTimestamp($attributes));
+        $task = $this->tasks->create($user, $this->withCompletionTimestamp($attributes));
+
+        AssignTaskJob::dispatch($task->id)->afterCommit();
+
+        return $task;
     }
 
     /** @param array<string, mixed> $attributes */
