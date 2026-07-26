@@ -16,6 +16,7 @@ use App\Services\UserEligibilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class CacheTest extends TestCase
@@ -28,6 +29,7 @@ class CacheTest extends TestCase
 
         Cache::flush();
         Role::query()->create(['name' => 'Employee']);
+        Role::query()->create(['name' => 'Manager']);
     }
 
     public function test_task_cache_miss_hit_and_refresh(): void
@@ -45,6 +47,23 @@ class CacheTest extends TestCase
         $task->refresh()->update(['title' => 'Refreshed title']);
         $this->assertFalse(Cache::has($cache->taskKey($task->id)));
         $this->assertSame('Refreshed title', app(TaskService::class)->details($task->id)->title);
+    }
+
+    public function test_cached_task_api_responses_remain_correct(): void
+    {
+        $manager = $this->employee(['role_id' => Role::query()->where('name', 'Manager')->value('id')]);
+        $task = Task::factory()->create(['created_by' => $manager->id, 'title' => 'Cached API task']);
+        Sanctum::actingAs($manager);
+
+        $this->getJson("/api/tasks/{$task->id}")
+            ->assertOk()
+            ->assertJsonPath('data.task.title', 'Cached API task');
+
+        $this->getJson("/api/tasks/{$task->id}")
+            ->assertOk()
+            ->assertJsonPath('data.task.title', 'Cached API task');
+
+        $this->assertTrue(Cache::has(app(TaskCacheService::class)->taskKey($task->id)));
     }
 
     public function test_assignment_rules_are_cached_with_the_required_key_and_refreshed_after_update(): void
