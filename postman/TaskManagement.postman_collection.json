@@ -1,0 +1,102 @@
+{
+  "info": {
+    "_postman_id": "f5dbb46c-00b8-4f2f-8b05-task-management-system",
+    "name": "Task Management System",
+    "description": "Collection for the implemented Laravel API. Assignment processing is internal and has no public HTTP endpoints in the current route set.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:8000/api", "type": "string" },
+    { "key": "TOKEN", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}" },
+            "url": "{{BASE_URL}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}" },
+            "url": "{{BASE_URL}}/auth/login"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": "{{BASE_URL}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Current User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": "{{BASE_URL}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": "{{BASE_URL}}/tasks?status=pending&sort_by=created_at&sort_direction=desc&per_page=15"
+          }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Prepare report\",\n  \"description\": \"Monthly summary\",\n  \"status\": \"pending\",\n  \"priority\": \"high\",\n  \"due_at\": \"2026-08-01 17:00:00\"\n}" },
+            "url": "{{BASE_URL}}/tasks"
+          }
+        },
+        {
+          "name": "View Task",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }], "url": "{{BASE_URL}}/tasks/1" }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"in_progress\"\n}" },
+            "url": "{{BASE_URL}}/tasks/1"
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }], "url": "{{BASE_URL}}/tasks/1" }
+        }
+      ]
+    },
+    {
+      "name": "Assignment",
+      "description": "No assignment HTTP endpoints are currently implemented. Assignment occurs asynchronously after task creation through AssignTaskJob.",
+      "item": []
+    }
+  ]
+}
