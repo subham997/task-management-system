@@ -110,7 +110,7 @@ Database records are **not** stored in GitHub. The repository includes migration
 docker compose exec app php artisan migrate:fresh --seed --force
 ```
 
-Demo credentials:
+Demo credentials For Manager login:
 
 ```text
 Email: demo@example.com
