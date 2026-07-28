@@ -77,6 +77,7 @@ See the [Architecture guide](docs/Architecture.md) for diagrams and implementati
 git clone <repository-url> task-management-system
 cd task-management-system
 docker compose up -d --build
+docker compose exec app composer install --no-interaction --prefer-dist
 ```
 
 The application is available at `http://localhost:8000`; Nginx serves the frontend and forwards `/api` requests to Laravel.
@@ -88,24 +89,38 @@ Copy the Laravel environment file and configure it for Docker before running app
 ```bash
 cd backend
 cp .env.example .env
-php artisan key:generate
 ```
 
-For Docker, configure MySQL and Redis hosts to use the Compose service names (`mysql` and `redis`). Set `CACHE_STORE=redis` and `QUEUE_CONNECTION=redis` when using the Redis services.
+For Docker, configure the copied `backend/.env` with `DB_HOST=mysql`, `DB_DATABASE=task_management`, `DB_USERNAME=laravel`, `DB_PASSWORD=laravel`, `REDIS_HOST=redis`, `REDIS_CLIENT=predis`, `CACHE_STORE=redis`, and `QUEUE_CONNECTION=redis`. The project includes Predis; the PHP container does not require the native Redis extension.
 
 ### Composer, migrations, and seeders
 
-Dependencies are installed in the application image. If running outside Docker, install them first:
+Install dependencies and generate the application key through the Docker application container:
 
 ```bash
-composer install
-php artisan migrate --seed
+docker compose exec app composer install --no-interaction --prefer-dist
+docker compose exec app php artisan key:generate --force
 ```
 
-To rebuild local data intentionally:
+### Demo database and seeded data
+
+Database records are **not** stored in GitHub. The repository includes migrations and seeders, so each developer creates local data after cloning. The command below recreates the local database and seeds the Demo Manager account plus exactly 10 professional English sample tasks:
 
 ```bash
-php artisan migrate:fresh --seed
+docker compose exec app php artisan migrate:fresh --seed --force
+```
+
+Demo credentials:
+
+```text
+Email: demo@example.com
+Password: password123
+```
+
+To restore only the English sample tasks without rebuilding the entire database:
+
+```bash
+docker compose exec app php artisan db:seed --class=TaskSeeder --force
 ```
 
 ### Queue worker
@@ -113,7 +128,7 @@ php artisan migrate:fresh --seed
 Run a worker after the application is configured. Task assignment is asynchronous.
 
 ```bash
-php artisan queue:work --tries=3 --timeout=120
+docker compose exec app php artisan queue:work --tries=3 --timeout=120
 ```
 
 ### AngularJS frontend
@@ -124,7 +139,9 @@ The current frontend is a static AngularJS application; it has no separate npm b
 
 ```bash
 docker compose up -d --build
-docker compose exec app php artisan migrate --seed
+docker compose exec app composer install --no-interaction --prefer-dist
+docker compose exec app php artisan key:generate --force
+docker compose exec app php artisan migrate:fresh --seed --force
 docker compose exec app php artisan queue:work --tries=3 --timeout=120
 ```
 
@@ -163,6 +180,7 @@ Rules filter active users by IDs, roles, departments, designations, and optional
 
 - Roles are seeded before registration so a new user can receive the Employee role.
 - Docker is the intended local runtime; non-Docker users provide equivalent PHP, MySQL, and Redis services.
+- Seeded demo data is local only; run the documented migration/seed command after every fresh clone or database reset.
 - Assignment configuration is managed through the database/application layer; a public assignment-rule API is not exposed in the current routes.
 - The UI includes graceful handling for a queue-status request, but the backend currently exposes no `/api/queue-status` route.
 

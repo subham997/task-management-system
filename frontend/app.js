@@ -84,12 +84,18 @@ angular.module('taskApp', ['ngRoute'])
         var storedToken = $window.localStorage.getItem('task_token');
         var storedUser = $window.localStorage.getItem('task_user');
 
-        if (storedToken) {
+        if (storedToken && storedToken !== 'undefined') {
           this.token = storedToken;
+        } else {
+          $window.localStorage.removeItem('task_token');
         }
 
-        if (storedUser) {
-          this.user = JSON.parse(storedUser);
+        if (storedUser && storedUser !== 'undefined') {
+          try {
+            this.user = JSON.parse(storedUser);
+          } catch (error) {
+            $window.localStorage.removeItem('task_user');
+          }
         }
       },
       isAuthenticated: function () {
